@@ -49,7 +49,7 @@ $firms = $db->query("SELECT f.*, COUNT(p.id) AS project_count FROM firms f LEFT 
 $csrf  = csrfToken();
 
 $pageTitle  = 'Firm Management';
-$activePage = 'progress';
+$activePage = 'firms';
 $breadcrumb = '<a href="'.h(appPath('index.php')).'">Dashboard</a> / Firm Management';
 ob_start();
 ?>
