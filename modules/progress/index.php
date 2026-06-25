@@ -154,12 +154,14 @@ ob_start();
     </div>
 </div>
 
-<script>
-    initSearch('progressSearch', 'progressTableBody');
-</script>
+
 <?php
 $pageContent = ob_get_clean();
 require_once __DIR__ . '/../../includes/header.php';
 echo $pageContent;
 require_once __DIR__ . '/../../includes/footer.php';
 ?>
+
+<script>
+    initSearch('progressSearch', 'progressTableBody');
+</script>
