@@ -142,7 +142,7 @@ const PDCModal = {
 
         // Add initial 4 cards
         PDCModal.data = [];
-        for (let i = 1; i <= 4; i++) PDCModal.addCard();
+        for (let i = 1; i <= 36; i++) PDCModal.addCard();
     },
 
     addCard() {

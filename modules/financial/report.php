@@ -111,10 +111,7 @@ ob_start();
                             <div style="text-align:center;padding:60px 20px;color:#888;">
                                 <i class="bi bi-file-earmark-x" style="font-size:48px;display:block;margin-bottom:12px;color:#dde3ea;"></i>
                                 <div style="font-size:14px;font-weight:600;">No Audited Financial Report submitted yet</div>
-                                <div style="font-size:12px;margin-top:6px;">
-                                    Upload it in the
-                                    <a href="<?= h(appPath('modules/project/stage_pre_refunding.php?id=' . $projectId)) ?>">Pre-Refunding Stage</a>
-                                </div>
+                                
                             </div>
                         <?php endif; ?>
                     </div>
