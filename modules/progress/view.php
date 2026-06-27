@@ -117,14 +117,14 @@ ob_start();
     <div class="row g-4">
         <!-- Left: Project Info -->
         <div class="col-lg-4">
-            <!-- Project Image -->
-            <?php if ($project['project_image']): ?>
+            <!-- Approval Letter -->
+            <?php if ($project['approval_letter']): ?>
             <div class="card mb-4">
-                <div class="card-header-ppmis"><i class="bi bi-image me-2"></i>Project Image</div>
+                <div class="card-header-ppmis"><i class="bi bi-image me-2"></i>Approval Letter</div>
                 <div class="card-body-ppmis" style="padding:12px;">
-                    <img src="<?= h($project['project_image']) ?>" alt="Project Image"
+                    <img src="<?= h($project['approval_letter']) ?>" alt="Approval Letter"
                          style="width:100%;border-radius:10px;cursor:pointer;"
-                         onclick="previewFile('<?= h($project['project_image']) ?>','Project Image')">
+                         onclick="previewFile('<?= h($project['approval_letter']) ?>','Approval Letter')">
                 </div>
             </div>
             <?php endif; ?>

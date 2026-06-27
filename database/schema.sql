@@ -42,7 +42,7 @@ CREATE TABLE projects (
     firm_id INT UNSIGNED NOT NULL,
     project_title VARCHAR(400) NOT NULL,
     fund_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-    project_image VARCHAR(500),         -- path to uploaded project image
+    approval_letter VARCHAR(500),         -- path to uploaded approval letter
     current_stage ENUM(
         'approval',
         'first_untagging',

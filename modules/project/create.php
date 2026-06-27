@@ -21,10 +21,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$firmId || $projectTitle === '' || $fundAmount <= 0) {
         $error = 'Please fill in all required fields.';
     } else {
-        // Handle project image
+        // Handle approval letter
         $projectImagePath = null;
-        if (!empty($_FILES['project_image']['name'])) {
-            $up = handleUpload($_FILES['project_image'], 'project_images');
+        if (!empty($_FILES['approval_letter']['name'])) {
+            $up = handleUpload($_FILES['approval_letter'], 'approval_letters');
             if (isset($up['error'])) {
                 $error = $up['error'];
             } else {
@@ -139,7 +139,7 @@ ob_start();
 
         <!-- Project Title + Image -->
         <div class="card mb-4">
-            <div class="card-header-ppmis"><i class="bi bi-image me-2"></i>Project Title</div>
+            <div class="card-header-ppmis"><i class="bi bi-image me-2"></i>Approval Letter</div>
             <div class="card-body-ppmis">
                 <div class="image-upload-box mb-4">
                     <button type="button" class="insert-image-btn" onclick="document.getElementById('projectImageInput').click()">
