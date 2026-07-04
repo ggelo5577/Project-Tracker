@@ -22,13 +22,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Please fill in all required fields.';
     } else {
         // Handle approval letter
-        $projectImagePath = null;
+        $approvalLetterPath = null;
         if (!empty($_FILES['approval_letter']['name'])) {
             $up = handleUpload($_FILES['approval_letter'], 'approval_letters');
             if (isset($up['error'])) {
                 $error = $up['error'];
             } else {
-                $projectImagePath = $up['path'];
+                $approvalLetterPath = $up['path'];
             }
         }
 
@@ -48,14 +48,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 // Insert project
                 $stmt = $db->prepare("
-                    INSERT INTO projects (firm_id, project_title, fund_amount, project_image, current_stage, status, created_by)
+                    INSERT INTO projects (firm_id, project_title, fund_amount, approval_letter, current_stage, status, created_by)
                     VALUES (:fid, :title, :amount, :img, 'approval', 'active', :uid)
                 ");
                 $stmt->execute([
                     ':fid'    => $firmId,
                     ':title'  => $projectTitle,
                     ':amount' => $fundAmount,
-                    ':img'    => $projectImagePath,
+                    ':img'    => $approvalLetterPath,
                     ':uid'    => currentUser()['id'],
                 ]);
                 $projectId = (int)$db->lastInsertId();
@@ -145,7 +145,7 @@ ob_start();
                     <button type="button" class="insert-image-btn" onclick="document.getElementById('projectImageInput').click()">
                         <i class="bi bi-upload"></i> Insert Image
                     </button>
-                    <input type="file" id="projectImageInput" name="project_image"
+                    <input type="file" id="projectImageInput" name="approval_letter"
                            accept="image/jpeg,image/png,image/gif" style="display:none;"
                            onchange="previewProjectImage(this)">
                     <div class="image-preview-area" id="projectImgPreview">
