@@ -49,9 +49,10 @@ CREATE TABLE projects (
         'final_untagging',
         'pre_refunding',
         'refunding',
-        'completed'
+        'completed',
+        'terminated'
     ) NOT NULL DEFAULT 'approval',
-    status ENUM('active','finished','refund','completed') NOT NULL DEFAULT 'active',
+    status ENUM('active','refund','graduated','terminated') NOT NULL DEFAULT 'active',
     created_by INT UNSIGNED,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -71,7 +72,8 @@ CREATE TABLE submissions (
         'first_untagging',
         'final_untagging',
         'pre_refunding',
-        'refunding'
+        'refunding',
+        'terminated'
     ) NOT NULL,
     document_type ENUM(
         'ppis_letter',
@@ -85,7 +87,8 @@ CREATE TABLE submissions (
         'matrix_of_inspection',
         'cert_final_untagging',
         'certified_true_copy',
-        'audited_financial_report'
+        'audited_financial_report',
+        'supporting_documents'
     ) NOT NULL,
     file_path VARCHAR(500) NOT NULL,
     original_filename VARCHAR(300) NOT NULL,

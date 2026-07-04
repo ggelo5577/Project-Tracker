@@ -192,7 +192,16 @@ ob_start();
             <div class="card">
                 <div class="card-header-ppmis"><i class="bi bi-lightning me-2"></i>Quick Actions</div>
                 <div class="card-body-ppmis" style="display:flex;flex-direction:column;gap:10px;">
-                    <a href="<?= h($stageNextUrl[$project['current_stage']] ?? '#') ?>?id=<?= $projectId ?>"
+                    <?php if($project['status'] == 'terminated'): ?>
+                    <div class="btn-ppmis-disabled" style="justify-content:center;min-height: 5px;margin-bottom: 5px;">
+                        <i class="bi bi-ban"></i> Project Terminated
+                    </div>
+                    <a href="<?= h(appPath('modules/financial/report.php?id=' . $projectId)) ?>"
+                       class="btn-ppmis-secondary" style="justify-content:center;">
+                        <i class="bi bi-file-earmark-bar-graph"></i> Financial Report
+                    </a>
+                    <?php else: ?>
+                        <a href="<?= h($stageNextUrl[$project['current_stage']] ?? '#') ?>?id=<?= $projectId ?>"
                        class="btn-ppmis-primary" style="justify-content:center;">
                         <i class="bi bi-pencil-square"></i> Continue This Stage
                     </a>
@@ -200,6 +209,8 @@ ob_start();
                        class="btn-ppmis-secondary" style="justify-content:center;">
                         <i class="bi bi-file-earmark-bar-graph"></i> Financial Report
                     </a>
+                    <?php endif; ?>
+                    
                 </div>
             </div>
             <?php else: ?>

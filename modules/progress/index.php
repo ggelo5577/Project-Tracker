@@ -140,7 +140,7 @@ ob_start();
                                     </a>
                                 </td>
                                 <td>
-                                    <div class="button-group" style="max-width:200px;">
+                                    <div style="max-width:200px;">
                                         <?php if ($stage == 'terminated'): ?>
                                             <div class="btn-ppmis-disabled" style="justify-content:center;min-height: 5px;margin-bottom: 5px;">
                                                 <i class="bi bi-ban"></i> Terminated Project
@@ -151,8 +151,7 @@ ob_start();
                                                 <i class="bi bi-pencil-square"></i> Continue This Stage
                                             </a>
                                         <?php endif; ?>
-
-                                        <div class="button-group" style="display:flex;">
+                                        <div style="display:flex;">
                                             <a href="<?= h(appPath('modules/progress/view.php?id=' . (int)$projectId)) ?>"
                                                 class="btn-preview" style="font-size:12px;padding:6px 12px;border-radius:6px;text-decoration:none;margin: 5px;">
                                                 <i class="bi bi-eye me-1"></i>View

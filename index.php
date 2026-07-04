@@ -9,10 +9,10 @@ $db = getDB();
 $statsQuery = $db->query("
     SELECT
         COUNT(*) AS total,
-        SUM(status = 'active')    AS active,
-        SUM(status = 'finished')  AS finished,
-        SUM(status = 'refund')    AS refund,
-        SUM(status = 'completed') AS completed
+        SUM(status = 'active')     AS active,
+        SUM(status = 'terminated') AS 'terminated',
+        SUM(status = 'refund')     AS refund,
+        SUM(status = 'graduated')  AS graduated
     FROM projects
 ");
 $stats = $statsQuery->fetch();
@@ -43,8 +43,8 @@ $projectList = $db->query("
 
 $stageLabels = [
     'approval'       => 'Approval Stage',
-    'first_untagging'=> '1st Untagging Stage',
-    'final_untagging'=> 'Final Untagging Stage',
+    'first_untagging' => '1st Untagging Stage',
+    'final_untagging' => 'Final Untagging Stage',
     'pre_refunding'  => 'Pre-Refunding',
     'refunding'      => 'Refund Stage',
     'completed'      => 'Completed',
@@ -52,8 +52,8 @@ $stageLabels = [
 
 $stageBadge = [
     'approval'       => 'approval',
-    'first_untagging'=> 'first-unt',
-    'final_untagging'=> 'final-unt',
+    'first_untagging' => 'first-unt',
+    'final_untagging' => 'final-unt',
     'pre_refunding'  => 'pre-refund',
     'refunding'      => 'refunding',
     'completed'      => 'completed',
@@ -81,8 +81,8 @@ ob_start();
         <div class="stat-card">
             <div class="stat-icon green"><i class="bi bi-check2-circle"></i></div>
             <div>
-                <div class="stat-label">Finished Projects</div>
-                <div class="stat-value"><?= h($stats['finished'] ?? 0) ?></div>
+                <div class="stat-label">Graduated Projects</div>
+                <div class="stat-value"><?= h($stats['graduated'] ?? 0) ?></div>
             </div>
         </div>
         <div class="stat-card">
@@ -93,10 +93,10 @@ ob_start();
             </div>
         </div>
         <div class="stat-card">
-            <div class="stat-icon gray"><i class="bi bi-trophy"></i></div>
+            <div class="stat-icon red"><i class="bi bi-ban"></i></div>
             <div>
-                <div class="stat-label">Completed Refunds</div>
-                <div class="stat-value"><?= h($stats['completed'] ?? 0) ?></div>
+                <div class="stat-label">Terminated Projects</div>
+                <div class="stat-value"><?= h($stats['terminated'] ?? 0) ?></div>
             </div>
         </div>
     </div>
@@ -125,10 +125,10 @@ ob_start();
                         </div>
                     </div>
                     <?php if ($refundStats['total_amount'] > 0): ?>
-                    <div style="margin-top:12px;font-size:12px;color:#888;">
-                        Total: <strong><?= peso((float)$refundStats['total_amount']) ?></strong>
-                        &nbsp;|&nbsp; Paid: <strong style="color:#00C896;"><?= peso((float)($refundStats['paid_amount'] ?? 0)) ?></strong>
-                    </div>
+                        <div style="margin-top:12px;font-size:12px;color:#888;">
+                            Total: <strong><?= peso((float)$refundStats['total_amount']) ?></strong>
+                            &nbsp;|&nbsp; Paid: <strong style="color:#00C896;"><?= peso((float)($refundStats['paid_amount'] ?? 0)) ?></strong>
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -151,32 +151,32 @@ ob_start();
                             </tr>
                         </thead>
                         <tbody>
-                        <?php if (empty($projectList)): ?>
-                            <tr>
-                                <td colspan="4" style="text-align:center;padding:32px;color:#888;">
-                                    <i class="bi bi-inbox" style="font-size:28px;display:block;margin-bottom:8px;"></i>
-                                    No projects yet. <a href="<?= h(appPath('modules/project/create.php')) ?>">Start one!</a>
-                                </td>
-                            </tr>
-                        <?php else: ?>
-                            <?php foreach ($projectList as $p): ?>
-                            <tr>
-                                <td><strong><?= h($p['project_title']) ?></strong></td>
-                                <td><?= h($p['firm_name']) ?></td>
-                                <td>
-                                    <span class="badge-stage <?= h($stageBadge[$p['current_stage']] ?? '') ?>">
-                                        <?= h($stageLabels[$p['current_stage']] ?? $p['current_stage']) ?>
-                                    </span>
-                                </td>
-                                <td>
-                                    <a href="<?= h(appPath('modules/progress/view.php?id=' . (int)$p['id'])) ?>"
-                                       class="btn-preview" style="font-size:12px;padding:5px 10px;border-radius:6px;text-decoration:none;">
-                                        View
-                                    </a>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
+                            <?php if (empty($projectList)): ?>
+                                <tr>
+                                    <td colspan="4" style="text-align:center;padding:32px;color:#888;">
+                                        <i class="bi bi-inbox" style="font-size:28px;display:block;margin-bottom:8px;"></i>
+                                        No projects yet. <a href="<?= h(appPath('modules/project/create.php')) ?>">Start one!</a>
+                                    </td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach ($projectList as $p): ?>
+                                    <tr>
+                                        <td><strong><?= h($p['project_title']) ?></strong></td>
+                                        <td><?= h($p['firm_name']) ?></td>
+                                        <td>
+                                            <span class="badge-stage <?= h($stageBadge[$p['current_stage']] ?? '') ?>">
+                                                <?= h($stageLabels[$p['current_stage']] ?? $p['current_stage']) ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="<?= h(appPath('modules/progress/view.php?id=' . (int)$p['id'])) ?>"
+                                                class="btn-preview" style="font-size:12px;padding:5px 10px;border-radius:6px;text-decoration:none;">
+                                                View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -186,7 +186,7 @@ ob_start();
 </div>
 
 <script>
-initRefundChart(<?= $paidPct ?>, <?= $pendingPct ?>);
+    initRefundChart(<?= $paidPct ?>, <?= $pendingPct ?>);
 </script>
 
 <?php

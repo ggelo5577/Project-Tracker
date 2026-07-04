@@ -14,12 +14,14 @@
     --secondary:    #1D6FB5;
     --success:      #00C896;
     --danger:       #E74C3C;
+    --danger-hover: #d35749;
     --warning:      #F39C12;
     --bg:           #F5F7FA;
     --bg-card:      #ffffff;
     --text:         #2C3E50;
     --text-muted:   #6B7D8F;
     --border:       #DDE3EA;
+    --disabled:     #273362;
     --sidebar-w:    220px;
     --topbar-h:     56px;
     --radius:       10px;
@@ -232,7 +234,7 @@ body {
 .stat-icon.blue   { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); }
 .stat-icon.orange { background: linear-gradient(135deg, var(--accent) 0%, #d4641a 100%); }
 .stat-icon.green  { background: linear-gradient(135deg, var(--success) 0%, #009970 100%); }
-.stat-icon.gray   { background: linear-gradient(135deg, #7f8c8d 0%, #5d6d7e 100%); }
+.stat-icon.red   { background: linear-gradient(135deg, #e35252 0%, #e61c1c 100%); }
 
 .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.7px; font-weight: 600; }
 .stat-value { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1.1; }
@@ -349,7 +351,20 @@ body {
     transition: background var(--transition);
     display: flex; align-items: center; gap: 6px;
 }
+
+.btn-preview-danger {
+    background: var(--danger);
+    color: #fff;
+    border: none; border-radius: 8px;
+    padding: 7px 14px; font-size: 13px; font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition);
+    display: flex; align-items: center; gap: 6px;
+}
+
 .btn-preview:hover { background: var(--primary); }
+
+.btn-preview-danger:hover { background: var(--danger-hover); }
 
 .doc-status-icon {
     font-size: 18px;
@@ -460,6 +475,23 @@ body {
     text-decoration: none;
 }
 .btn-ppmis-secondary:hover { background: var(--primary-dark); color: #fff; }
+
+
+.btn-ppmis-disabled {
+    background: var(--disabled);
+    color: #fff;
+    border: none; border-radius: 8px;
+    padding: 10px 24px; font-size: 14px; font-weight: 700;
+    cursor: pointer;
+    transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
+    display: inline-flex; align-items: center; gap: 8px;
+    text-decoration: none;
+}
+
+.btn-ppmis-disabled:hover {
+    background: #3e4f66; color: #fff;
+    transform: translateY(-1px); box-shadow: 0 4px 14px rgba(232,119,34,0.4);
+}
 
 .form-actions {
     display: flex; justify-content: flex-end; gap: 12px;
