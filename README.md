@@ -1,5 +1,5 @@
 # PPMIS — Project Progress and Management Information System
-### DOST Region VIII, Maasin City
+### DOST Provincial Office, Maasin City
 
 ---
 
