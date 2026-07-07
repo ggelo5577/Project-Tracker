@@ -92,7 +92,7 @@ function endOfMonth(string $date): string {
 }
 
 // Log activity
-function logActivity(int $userId, ?int $projectId, string $action, string $document_type, string $file_path = '', string $details = ''): void {
+function logActivity(int $userId, ?int $projectId, string $action, ?string $document_type = null, string $file_path = '', string $details = ''): void {
     try {
         $db = getDB();
         $stmt = $db->prepare(

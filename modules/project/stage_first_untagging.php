@@ -62,6 +62,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':mime'  => $up['mime_type'],
                     ':uid'   => currentUser()['id'],
                 ]);
+
+                logActivity(
+                    currentUser()['id'],
+                    $projectId,
+                    'SUBMIT_' . strtoupper($docType),
+                    $docType,
+                    $up['path'],
+                    'Submission of ' . $docType
+                );
             }
         }
 
@@ -70,9 +79,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($pdcCount > 0) {
                 $adv = $db->prepare("UPDATE projects SET current_stage='final_untagging', updated_at=NOW() WHERE id=:id AND current_stage='first_untagging'");
                 $adv->execute([':id' => $projectId]);
+
+                logActivity(
+                    currentUser()['id'],
+                    $projectId,
+                    'STAGE_ADVANCE_FIRST_UNTAGGING',
+                    'first_untagging',
+                    '',
+                    '1st Untagging stage completed, advanced to Final Untagging.'
+                );
             }
             $db->commit();
-            logActivity(currentUser()['id'], $projectId, '1ST_UNTAGGING_SUBMIT', '1st Untagging documents submitted.');
             header('Location: '.appPath("modules/project/stage_final_untagging.php?id={$projectId}"));
             exit;
         }

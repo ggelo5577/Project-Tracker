@@ -8,19 +8,28 @@ $db        = getDB();
 $projectId = (int)($_GET['id'] ?? 0);
 $error     = '';
 
-if (!$projectId) { header('Location: '.appPath('index.php')); exit; }
+if (!$projectId) {
+    header('Location: ' . appPath('index.php'));
+    exit;
+}
 
 $stmt = $db->prepare("SELECT p.*, f.firm_name FROM projects p JOIN firms f ON f.id = p.firm_id WHERE p.id = :id");
 $stmt->execute([':id' => $projectId]);
 $project = $stmt->fetch();
-if (!$project) { header('Location: '.appPath('index.php')); exit; }
+if (!$project) {
+    header('Location: ' . appPath('index.php'));
+    exit;
+}
 
 // Load existing
-function loadExisting(PDO $db, int $pid, string $stage): array {
+function loadExisting(PDO $db, int $pid, string $stage): array
+{
     $s = $db->prepare("SELECT document_type, file_path, original_filename FROM submissions WHERE project_id=:pid AND stage=:stage");
     $s->execute([':pid' => $pid, ':stage' => $stage]);
     $out = [];
-    foreach ($s->fetchAll() as $r) { $out[$r['document_type']] = $r; }
+    foreach ($s->fetchAll() as $r) {
+        $out[$r['document_type']] = $r;
+    }
     return $out;
 }
 
@@ -35,16 +44,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         foreach ($docTypes as $fk => $dt) {
             if (!empty($_FILES[$fk]['name'])) {
                 $up = handleUpload($_FILES[$fk], 'submissions');
-                if (isset($up['error'])) { $error .= $up['error'] . ' '; continue; }
-                $db->prepare("DELETE FROM submissions WHERE project_id=:pid AND stage='final_untagging' AND document_type=:dt")->execute([':pid'=>$projectId,':dt'=>$dt]);
+                if (isset($up['error'])) {
+                    $error .= $up['error'] . ' ';
+                    continue;
+                }
+                $db->prepare("DELETE FROM submissions WHERE project_id=:pid AND stage='final_untagging' AND document_type=:dt")->execute([':pid' => $projectId, ':dt' => $dt]);
                 $db->prepare("INSERT INTO submissions(project_id,stage,document_type,file_path,original_filename,file_size,mime_type,submitted_by) VALUES(:pid,'final_untagging',:dt,:path,:fname,:size,:mime,:uid)")
-                   ->execute([':pid'=>$projectId,':dt'=>$dt,':path'=>$up['path'],':fname'=>$up['original_filename'],':size'=>$up['file_size'],':mime'=>$up['mime_type'],':uid'=>currentUser()['id']]);
+                    ->execute([':pid' => $projectId, ':dt' => $dt, ':path' => $up['path'], ':fname' => $up['original_filename'], ':size' => $up['file_size'], ':mime' => $up['mime_type'], ':uid' => currentUser()['id']]);
+
+                logActivity(
+                    currentUser()['id'],
+                    $projectId,
+                    'SUBMIT_' . strtoupper($dt),
+                    $dt,
+                    $up['path'],
+                    'Submission of ' . $dt
+                );
             }
         }
         if (!$error) {
-            $db->prepare("UPDATE projects SET current_stage='pre_refunding', updated_at=NOW() WHERE id=:id AND current_stage='final_untagging'")->execute([':id'=>$projectId]);
+            $db->prepare("UPDATE projects SET current_stage='pre_refunding', updated_at=NOW() WHERE id=:id AND current_stage='final_untagging'")->execute([':id' => $projectId]);
             $db->commit();
-            header('Location: '.appPath("modules/project/stage_pre_refunding.php?id={$projectId}"));
+            header('Location: ' . appPath("modules/project/stage_pre_refunding.php?id={$projectId}"));
             exit;
         }
         $db->commit();
@@ -58,9 +79,10 @@ $existing = loadExisting($db, $projectId, 'final_untagging');
 $csrf = csrfToken();
 $pageTitle  = 'Final Untagging Stage';
 $activePage = 'start-project';
-$breadcrumb = '<a href="'.h(appPath('index.php')).'">Dashboard</a> / Final Untagging';
+$breadcrumb = '<a href="' . h(appPath('index.php')) . '">Dashboard</a> / Final Untagging';
 
-function docRowFinal(string $label, string $key, string $dt, array $ex): string {
+function docRowFinal(string $label, string $key, string $dt, array $ex): string
+{
     $has  = isset($ex[$dt]);
     $path = $has ? h($ex[$dt]['file_path']) : '';
     $name = $has ? h($ex[$dt]['original_filename']) : '';
@@ -91,11 +113,21 @@ ob_start();
     </div>
 
     <div class="stage-timeline">
-        <div class="stage-step"><div class="stage-label done">Start Project</div></div>
-        <div class="stage-step"><div class="stage-label done">1st Untagging</div></div>
-        <div class="stage-step"><div class="stage-label active">Final Untagging</div></div>
-        <div class="stage-step"><div class="stage-label">Pre-Refunding Submissions</div></div>
-        <div class="stage-step"><div class="stage-label">Refunding</div></div>
+        <div class="stage-step">
+            <div class="stage-label done">Start Project</div>
+        </div>
+        <div class="stage-step">
+            <div class="stage-label done">1st Untagging</div>
+        </div>
+        <div class="stage-step">
+            <div class="stage-label active">Final Untagging</div>
+        </div>
+        <div class="stage-step">
+            <div class="stage-label">Pre-Refunding Submissions</div>
+        </div>
+        <div class="stage-step">
+            <div class="stage-label">Refunding</div>
+        </div>
     </div>
 
     <?php if ($error): ?>
@@ -133,22 +165,23 @@ ob_start();
 </div>
 
 <script>
-function markDocDone(rowId, input) {
-    if (input.files && input.files[0]) {
-        document.getElementById(rowId)?.classList.add('has-file');
-        Toast.show(input.files[0].name + ' selected.', 'success');
+    function markDocDone(rowId, input) {
+        if (input.files && input.files[0]) {
+            document.getElementById(rowId)?.classList.add('has-file');
+            Toast.show(input.files[0].name + ' selected.', 'success');
+        }
     }
-}
-function previewDoc(inputId, existingPath, existingName) {
-    const input = document.getElementById(inputId);
-    if (input?.files?.[0]) {
-        previewFile(URL.createObjectURL(input.files[0]), input.files[0].name);
-    } else if (existingPath) {
-        previewFile(existingPath, existingName);
-    } else {
-        Toast.show('No file available.', 'error');
+
+    function previewDoc(inputId, existingPath, existingName) {
+        const input = document.getElementById(inputId);
+        if (input?.files?.[0]) {
+            previewFile(URL.createObjectURL(input.files[0]), input.files[0].name);
+        } else if (existingPath) {
+            previewFile(existingPath, existingName);
+        } else {
+            Toast.show('No file available.', 'error');
+        }
     }
-}
 </script>
 <?php
 $pageContent = ob_get_clean();

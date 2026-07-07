@@ -84,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
             logActivity(
                 currentUser()['id'],
                 $projectId,
-                'UPDATE_DOCUMENT',
+                'UPDATE_' . strtoupper($documentType),
                 $documentType,
                 $result['path'],
                 $logDetails

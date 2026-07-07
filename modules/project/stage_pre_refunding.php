@@ -38,6 +38,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $db->prepare("DELETE FROM submissions WHERE project_id=:pid AND stage='pre_refunding' AND document_type=:dt")->execute([':pid'=>$projectId,':dt'=>$dt]);
                 $db->prepare("INSERT INTO submissions(project_id,stage,document_type,file_path,original_filename,file_size,mime_type,submitted_by) VALUES(:pid,'pre_refunding',:dt,:path,:fname,:size,:mime,:uid)")
                    ->execute([':pid'=>$projectId,':dt'=>$dt,':path'=>$up['path'],':fname'=>$up['original_filename'],':size'=>$up['file_size'],':mime'=>$up['mime_type'],':uid'=>currentUser()['id']]);
+
+                logActivity(
+                    currentUser()['id'],
+                    $projectId,
+                    'SUBMIT_' . strtoupper($dt),
+                    $dt,
+                    $up['path'],
+                    'Submission of ' . $dt
+                );
             }
         }
         if (!$error) {
@@ -51,10 +60,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 foreach ($pdcs->fetchAll() as $pdc) {
                     $refIns->execute([':pid'=>$projectId,':pdcid'=>$pdc['id'],':dt'=>$pdc['adjusted_date'],':amt'=>$pdc['amount']]);
                 }
+
+                logActivity(
+                    currentUser()['id'],
+                    $projectId,
+                    'BUILD_REFUND_SCHEDULE',
+                    'refund_schedule',
+                    '',
+                    'Refund schedule generated from PDCs.'
+                );
             }
 
             $db->prepare("UPDATE projects SET current_stage='refunding',status='refund',updated_at=NOW() WHERE id=:id")->execute([':id'=>$projectId]);
             $db->commit();
+
+            logActivity(
+                currentUser()['id'],
+                $projectId,
+                'STAGE_ADVANCE_PRE_REFUNDING',
+                'refunding',
+                '',
+                'Pre-Refunding documents submitted, advanced to Refunding stage.'
+            );
+
             header('Location: '.appPath("modules/project/stage_refunding.php?id={$projectId}"));
             exit;
         }

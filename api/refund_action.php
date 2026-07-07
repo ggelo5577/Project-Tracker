@@ -75,6 +75,8 @@ try {
             currentUser()['id'],
             $refund['project_id'],
             'REFUND_NOTIFY',
+            null,
+            '',
             "Notified refund #$refundId — " . peso((float)$refund['refund_amount'])
         );
 
@@ -102,6 +104,8 @@ try {
             currentUser()['id'],
             $refund['project_id'],
             'REFUND_DONE',
+            null,
+            '',
             "Marked refund #$refundId as done — " . peso((float)$refund['refund_amount'])
         );
 

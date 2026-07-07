@@ -59,7 +59,7 @@ try {
         $date   = $_POST[$dateKey] ?? '';
         $amount = (float)($_POST[$amtKey] ?? 0);
 
-        if (!$date || $amount <= 0) {
+        if (!$date && $amount <= 0) {
             $errors[] = "PDC $i: Date and amount are required.";
             continue;
         }
@@ -117,6 +117,15 @@ try {
             ':amt'   => $amount,
         ]);
 
+        logActivity(
+            currentUser()['id'],
+            $projectId,
+            'SUBMIT_PDC',
+            'pdc',
+            $filePath ?? '',
+            "PDC #$i submitted (check date: $date, amount: $amount)"
+        );
+
         $inserted++;
     }
 
@@ -127,14 +136,33 @@ try {
     }
 
     // Update project stage if still in approval
-    $db->prepare("
+    $advanced = $db->prepare("
         UPDATE projects SET current_stage = 'first_untagging', updated_at = NOW()
         WHERE id = :id AND current_stage = 'approval'
-    ")->execute([':id' => $projectId]);
+    ");
+    $advanced->execute([':id' => $projectId]);
 
     $db->commit();
 
-    logActivity(currentUser()['id'], $projectId, 'SUBMIT_PDCS', "$inserted PDC(s) submitted.");
+    if ($advanced->rowCount() > 0) {
+        logActivity(
+            currentUser()['id'],
+            $projectId,
+            'STAGE_ADVANCE_APPROVAL',
+            'first_untagging',
+            '',
+            'PDCs submitted, advanced from Approval to 1st Untagging.'
+        );
+    }
+
+    logActivity(
+        currentUser()['id'],
+        $projectId,
+        'SUBMIT_PDCS_BATCH',
+        'pdc',
+        '',
+        "$inserted PDC(s) submitted."
+    );
 
     echo json_encode([
         'success'  => true,

@@ -60,6 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ]);
                 $projectId = (int)$db->lastInsertId();
 
+                logActivity(currentUser()['id'],$projectId,'SUBMIT_APPROVAL_LETTER','approval_letter',$approvalLetterPath,'Submission of approval letter');
+
                 // Insert PPIS submission if uploaded
                 if ($ppisPath) {
                     $sub = $db->prepare("
@@ -73,6 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ':uid'   => currentUser()['id'],
                     ]);
                 }
+
+                logActivity(currentUser()['id'],$projectId,'SUBMIT_PPIS_LETTER','ppis_letter',$ppisPath,'Submission of approval letter');
 
                 $db->commit();
                 logActivity(currentUser()['id'], $projectId, 'CREATE_PROJECT', "Created project: $projectTitle");
