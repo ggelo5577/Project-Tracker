@@ -24,7 +24,16 @@ $allDone = count($refunds) > 0 && array_reduce($refunds, fn($c, $r) => $c && $r[
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['finish']) && $allDone) {
     verifyCsrf();
     $db->prepare("UPDATE projects SET current_stage='completed',status='completed',updated_at=NOW() WHERE id=:id")->execute([':id'=>$projectId]);
-    logActivity(currentUser()['id'], $projectId, 'PROJECT_COMPLETED', 'All refunds done – project completed.');
+
+    logActivity(
+        currentUser()['id'],
+        $projectId,
+        'PROJECT_COMPLETED',
+        'refunding',
+        '',
+        'All refunds done – project completed.'
+    );
+
     header('Location: '.appPath('index.php?completed=1'));
     exit;
 }

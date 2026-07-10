@@ -1,5 +1,5 @@
 # PPMIS — Project Progress and Management Information System
-### DOST Region VIII, Maasin City
+### DOST Provincial Office, Maasin City
 
 ---
 
@@ -39,13 +39,14 @@ ppmis/
 ├── modules/
 │   ├── project/
 │   │   ├── create.php           ← Approval Stage (start project)
-│   │   ├── view.php             ← Project detail & document status
 │   │   ├── stage_first_untagging.php
 │   │   ├── stage_final_untagging.php
 │   │   ├── stage_pre_refunding.php
 │   │   └── stage_refunding.php
 │   ├── progress/
 │   │   └── index.php            ← Progress monitoring table
+│   │   ├── view.php             ← Project detail & document status
+│   │   ├── terminate.php        ← New Project Status: Terminated 
 │   ├── financial/
 │   │   └── report.php           ← Financial report + image preview
 │   └── firms/

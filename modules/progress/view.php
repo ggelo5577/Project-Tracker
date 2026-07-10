@@ -1,12 +1,99 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../includes/session.php';
+require_once __DIR__ . '/../../includes/upload.php';
 requireLogin();
 
 $db        = getDB();
-$projectId = (int)($_GET['id'] ?? 0);
+$projectId = (int)($_GET['id'] ?? $_POST['project_id'] ?? 0);
 
 if (!$projectId) { header('Location: '.appPath('index.php')); exit; }
+
+$error   = '';
+$success = '';
+
+// Handle approval letter resubmission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'update_approval_letter') {
+    verifyCsrf();
+
+    if (!isset($_FILES['approval_letter_file']) || $_FILES['approval_letter_file']['error'] === UPLOAD_ERR_NO_FILE) {
+        $error = 'Please choose a file to upload.';
+    } else {
+        $result = handleUpload($_FILES['approval_letter_file'], 'approval_letters');
+        if (isset($result['error'])) {
+            $error = $result['error'];
+        } else {
+            $upd = $db->prepare("UPDATE projects SET approval_letter = :fp WHERE id = :id");
+            $upd->execute([':fp' => $result['path'], ':id' => $projectId]);
+
+            logActivity(
+                currentUser()['id'],
+                $projectId,
+                'UPDATE_APPROVAL_LETTER',
+                $result['path'],
+                'Resubmitted approval letter (' . $result['original_filename'] . ')'
+            );
+
+            $success = 'Approval letter updated successfully!';
+        }
+    }
+}
+
+// Handle document resubmission (create or replace a submission)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'update_document') {
+    verifyCsrf();
+    $stage        = sanitize($_POST['stage'] ?? '');
+    $documentType = sanitize($_POST['document_type'] ?? '');
+
+    if ($stage === '' || $documentType === '') {
+        $error = 'Invalid document.';
+    } elseif (!isset($_FILES['document_file']) || $_FILES['document_file']['error'] === UPLOAD_ERR_NO_FILE) {
+        $error = 'Please choose a file to upload.';
+    } else {
+        $result = handleUpload($_FILES['document_file'], 'submissions');
+        if (isset($result['error'])) {
+            $error = $result['error'];
+        } else {
+            $chk = $db->prepare("SELECT id FROM submissions WHERE project_id = :pid AND document_type = :dt LIMIT 1");
+            $chk->execute([':pid' => $projectId, ':dt' => $documentType]);
+            $existing = $chk->fetch();
+
+            if ($existing) {
+                $upd = $db->prepare("UPDATE submissions SET file_path = :fp, original_filename = :ofn, submitted_by = :uid, submitted_at = NOW() WHERE id = :id");
+                $upd->execute([
+                    ':fp'  => $result['path'],
+                    ':ofn' => $result['original_filename'],
+                    ':uid' => currentUser()['id'],
+                    ':id'  => $existing['id'],
+                ]);
+                $logDetails = 'Resubmitted document: ' . $documentType . ' (' . $result['original_filename'] . ')';
+            } else {
+                $ins = $db->prepare("INSERT INTO submissions (project_id, stage, document_type, file_path, original_filename, submitted_by, submitted_at)
+                    VALUES (:pid, :stage, :dt, :fp, :ofn, :uid, NOW())");
+                $ins->execute([
+                    ':pid'   => $projectId,
+                    ':stage' => $stage,
+                    ':dt'    => $documentType,
+                    ':fp'    => $result['path'],
+                    ':ofn'   => $result['original_filename'],
+                    ':uid'   => currentUser()['id'],
+                ]);
+                $logDetails = 'Submitted new document: ' . $documentType . ' (' . $result['original_filename'] . ')';
+            }
+
+            logActivity(
+                currentUser()['id'],
+                $projectId,
+                'UPDATE_' . strtoupper($documentType),
+                $documentType,
+                $result['path'],
+                $logDetails
+            );
+
+            $success = 'Document updated successfully!';
+        }
+    }
+}
 
 $stmt = $db->prepare("
     SELECT p.*, f.firm_name, f.contact_person, f.contact_email, f.contact_phone
@@ -93,6 +180,8 @@ $stageNextUrl = [
     'refunding'      => appPath('modules/project/stage_refunding.php'),
 ];
 
+$csrf = csrfToken();
+
 $pageTitle  = h($project['project_title']) . ' — Project Details';
 $activePage = 'progress';
 $breadcrumb = '<a href="'.h(appPath('index.php')).'">Dashboard</a> / <a href="'.h(appPath('modules/progress/index.php')).'">Progress</a> / ' . h($project['project_title']);
@@ -102,6 +191,13 @@ ob_start();
     <div class="page-banner">
         <i class="bi bi-folder-fill me-2"></i> <?= h($project['project_title']) ?>
     </div>
+
+    <?php if ($error): ?>
+        <div class="alert-ppmis error mb-3"><i class="bi bi-x-circle"></i><?= h($error) ?></div>
+    <?php endif; ?>
+    <?php if ($success): ?>
+        <div class="alert-ppmis success mb-3"><i class="bi bi-check-circle"></i><?= h($success) ?></div>
+    <?php endif; ?>
 
     <!-- Stage Timeline -->
     <div class="stage-timeline mb-4">
@@ -117,14 +213,33 @@ ob_start();
     <div class="row g-4">
         <!-- Left: Project Info -->
         <div class="col-lg-4">
-            <!-- Project Image -->
-            <?php if ($project['project_image']): ?>
+            <!-- Approval Letter -->
+            <?php if ($project['approval_letter']): ?>
             <div class="card mb-4">
-                <div class="card-header-ppmis"><i class="bi bi-image me-2"></i>Project Image</div>
+                <div class="card-header-ppmis" style="display:flex;align-items:center;justify-content:space-between;">
+                    <span><i class="bi bi-image me-2"></i>Approval Letter</span>
+                    <button type="button" class="btn-preview" style="font-size:11px;padding:3px 9px;background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.4);"
+                        onclick="openEditApprovalModal()">
+                        <i class="bi bi-pencil-square"></i> Edit
+                    </button>
+                </div>
                 <div class="card-body-ppmis" style="padding:12px;">
-                    <img src="<?= h($project['project_image']) ?>" alt="Project Image"
+                    <img src="<?= h($project['approval_letter']) ?>" alt="Approval Letter"
                          style="width:100%;border-radius:10px;cursor:pointer;"
-                         onclick="previewFile('<?= h($project['project_image']) ?>','Project Image')">
+                         onclick="previewFile('<?= h($project['approval_letter']) ?>','Approval Letter')">
+                </div>
+            </div>
+            <?php else: ?>
+            <div class="card mb-4">
+                <div class="card-header-ppmis" style="display:flex;align-items:center;justify-content:space-between;">
+                    <span><i class="bi bi-image me-2"></i>Approval Letter</span>
+                    <button type="button" class="btn-preview" style="font-size:11px;padding:3px 9px;background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.4);"
+                        onclick="openEditApprovalModal()">
+                        <i class="bi bi-upload"></i> Upload
+                    </button>
+                </div>
+                <div class="card-body-ppmis" style="padding:20px;text-align:center;color:#aaa;font-size:12px;">
+                    <i class="bi bi-image" style="font-size:24px;display:block;margin-bottom:4px;"></i>No approval letter uploaded
                 </div>
             </div>
             <?php endif; ?>
@@ -149,7 +264,16 @@ ob_start();
                                 </span>
                             </td></tr>
                         <tr><td style="padding:7px 0;color:#888;font-weight:600;border-top:1px solid #f0f0f0;">PDCs</td>
-                            <td style="padding:7px 0;border-top:1px solid #f0f0f0;"><?= (int)$pdcInfo['cnt'] ?> submitted</td></tr>
+                            <td style="padding:7px 0;border-top:1px solid #f0f0f0;">
+                                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                    <span><?= (int)$pdcInfo['cnt'] ?> submitted</span>
+                                    <?php if ((int)$pdcInfo['cnt'] > 0): ?>
+                                        <a href="<?= h(appPath('api/get_pdcs.php?project_id=' . $projectId)) ?>" target="_blank" class="btn-preview" style="font-size:11px;padding:3px 9px;">
+                                            <i class="bi bi-eye"></i> View PDCs
+                                        </a>
+                                    <?php endif; ?>
+                                </div>
+                            </td></tr>
                         <tr><td style="padding:7px 0;color:#888;font-weight:600;border-top:1px solid #f0f0f0;">Created</td>
                             <td style="padding:7px 0;border-top:1px solid #f0f0f0;"><?= h(date('M d, Y', strtotime($project['created_at']))) ?></td></tr>
                     </table>
@@ -192,7 +316,16 @@ ob_start();
             <div class="card">
                 <div class="card-header-ppmis"><i class="bi bi-lightning me-2"></i>Quick Actions</div>
                 <div class="card-body-ppmis" style="display:flex;flex-direction:column;gap:10px;">
-                    <a href="<?= h($stageNextUrl[$project['current_stage']] ?? '#') ?>?id=<?= $projectId ?>"
+                    <?php if($project['status'] == 'terminated'): ?>
+                    <div class="btn-ppmis-disabled" style="justify-content:center;min-height: 5px;margin-bottom: 5px;">
+                        <i class="bi bi-ban"></i> Project Terminated
+                    </div>
+                    <a href="<?= h(appPath('modules/financial/report.php?id=' . $projectId)) ?>"
+                       class="btn-ppmis-secondary" style="justify-content:center;">
+                        <i class="bi bi-file-earmark-bar-graph"></i> Financial Report
+                    </a>
+                    <?php else: ?>
+                        <a href="<?= h($stageNextUrl[$project['current_stage']] ?? '#') ?>?id=<?= $projectId ?>"
                        class="btn-ppmis-primary" style="justify-content:center;">
                         <i class="bi bi-pencil-square"></i> Continue This Stage
                     </a>
@@ -200,6 +333,8 @@ ob_start();
                        class="btn-ppmis-secondary" style="justify-content:center;">
                         <i class="bi bi-file-earmark-bar-graph"></i> Financial Report
                     </a>
+                    <?php endif; ?>
+                    
                 </div>
             </div>
             <?php else: ?>
@@ -261,13 +396,18 @@ ob_start();
                     <div class="doc-row <?= $sub ? 'has-file' : '' ?>" style="margin-bottom:8px;">
                         <i class="bi bi-file-earmark-check doc-status-icon"></i>
                         <span class="doc-name"><?= h($docLabels[$dt] ?? $dt) ?></span>
-                        <div class="doc-actions">
+                        <div class="doc-actions" style="display:flex;gap:6px;">
                             <?php if ($sub): ?>
                                 <button class="btn-preview" onclick="previewFile('<?= h($sub['file_path']) ?>','<?= h($sub['original_filename']) ?>')">
                                     <i class="bi bi-eye"></i> Preview
                                 </button>
                             <?php else: ?>
                                 <span style="font-size:11px;color:#aaa;font-style:italic;">Not yet submitted</span>
+                            <?php endif; ?>
+                            <?php if ($isReached): ?>
+                                <button class="btn-preview" onclick="openEditDocModal('<?= h($stage) ?>','<?= h($dt) ?>','<?= h($docLabels[$dt] ?? $dt) ?>')">
+                                    <i class="bi bi-pencil-square"></i> Edit
+                                </button>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -292,6 +432,92 @@ ob_start();
         </div>
     </div>
 </div>
+
+<!-- Edit Approval Letter Modal -->
+<div id="editApprovalModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1050;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:10px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+        <div class="card-header-ppmis" style="display:flex;align-items:center;justify-content:space-between;border-radius:10px 10px 0 0;">
+            <span><i class="bi bi-image me-2"></i>Resubmit Approval Letter</span>
+            <button type="button" onclick="closeEditApprovalModal()" style="background:none;border:none;color:#fff;font-size:20px;line-height:1;cursor:pointer;">&times;</button>
+        </div>
+        <div class="card-body-ppmis" style="padding:20px;">
+            <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+                <input type="hidden" name="action" value="update_approval_letter">
+                <input type="hidden" name="project_id" value="<?= (int)$projectId ?>">
+
+                <div class="mb-4">
+                    <label class="form-label-ppmis">New Approval Letter File *</label>
+                    <input type="file" name="approval_letter_file" class="ppmis-input" accept=".jpg,.jpeg,.png,.gif,.pdf" required>
+                    <div style="font-size:11px;color:#888;margin-top:4px;">JPG, PNG, GIF, or PDF. Max 10MB.</div>
+                </div>
+
+                <div style="display:flex;gap:10px;">
+                    <button type="button" class="btn-preview" style="flex:1;justify-content:center;" onclick="closeEditApprovalModal()">Cancel</button>
+                    <button type="submit" class="btn-ppmis-primary" style="flex:1;justify-content:center;">
+                        <i class="bi bi-upload"></i> Upload
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Document Modal -->
+<div id="editDocModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1050;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:10px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+        <div class="card-header-ppmis" style="display:flex;align-items:center;justify-content:space-between;border-radius:10px 10px 0 0;">
+            <span><i class="bi bi-pencil-square me-2"></i>Resubmit: <span id="editDocLabel"></span></span>
+            <button type="button" onclick="closeEditDocModal()" style="background:none;border:none;color:#fff;font-size:20px;line-height:1;cursor:pointer;">&times;</button>
+        </div>
+        <div class="card-body-ppmis" style="padding:20px;">
+            <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+                <input type="hidden" name="action" value="update_document">
+                <input type="hidden" name="project_id" value="<?= (int)$projectId ?>">
+                <input type="hidden" name="stage" id="editDocStage" value="">
+                <input type="hidden" name="document_type" id="editDocType" value="">
+
+                <div class="mb-4">
+                    <label class="form-label-ppmis">New File *</label>
+                    <input type="file" name="document_file" class="ppmis-input" accept=".jpg,.jpeg,.png,.gif,.pdf" required>
+                    <div style="font-size:11px;color:#888;margin-top:4px;">JPG, PNG, GIF, or PDF. Max 10MB.</div>
+                </div>
+
+                <div style="display:flex;gap:10px;">
+                    <button type="button" class="btn-preview" style="flex:1;justify-content:center;" onclick="closeEditDocModal()">Cancel</button>
+                    <button type="submit" class="btn-ppmis-primary" style="flex:1;justify-content:center;">
+                        <i class="bi bi-upload"></i> Upload
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openEditApprovalModal() {
+    document.getElementById('editApprovalModalOverlay').style.display = 'flex';
+}
+function closeEditApprovalModal() {
+    document.getElementById('editApprovalModalOverlay').style.display = 'none';
+}
+function openEditDocModal(stage, docType, label) {
+    document.getElementById('editDocStage').value = stage;
+    document.getElementById('editDocType').value = docType;
+    document.getElementById('editDocLabel').textContent = label;
+    document.getElementById('editDocModalOverlay').style.display = 'flex';
+}
+function closeEditDocModal() {
+    document.getElementById('editDocModalOverlay').style.display = 'none';
+}
+document.getElementById('editApprovalModalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeEditApprovalModal();
+});
+document.getElementById('editDocModalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeEditDocModal();
+});
+</script>
 <?php
 $pageContent = ob_get_clean();
 require_once __DIR__ . '/../../includes/header.php';

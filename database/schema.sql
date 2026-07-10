@@ -42,16 +42,17 @@ CREATE TABLE projects (
     firm_id INT UNSIGNED NOT NULL,
     project_title VARCHAR(400) NOT NULL,
     fund_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,
-    project_image VARCHAR(500),         -- path to uploaded project image
+    approval_letter VARCHAR(500),         -- path to uploaded approval letter
     current_stage ENUM(
         'approval',
         'first_untagging',
         'final_untagging',
         'pre_refunding',
         'refunding',
-        'completed'
+        'completed',
+        'terminated'
     ) NOT NULL DEFAULT 'approval',
-    status ENUM('active','finished','refund','completed') NOT NULL DEFAULT 'active',
+    status ENUM('active','refund','graduated','terminated') NOT NULL DEFAULT 'active',
     created_by INT UNSIGNED,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -71,7 +72,8 @@ CREATE TABLE submissions (
         'first_untagging',
         'final_untagging',
         'pre_refunding',
-        'refunding'
+        'refunding',
+        'terminated'
     ) NOT NULL,
     document_type ENUM(
         'ppis_letter',
@@ -85,7 +87,8 @@ CREATE TABLE submissions (
         'matrix_of_inspection',
         'cert_final_untagging',
         'certified_true_copy',
-        'audited_financial_report'
+        'audited_financial_report',
+        'supporting_documents'
     ) NOT NULL,
     file_path VARCHAR(500) NOT NULL,
     original_filename VARCHAR(300) NOT NULL,
@@ -147,8 +150,9 @@ CREATE TABLE activity_logs (
     user_id INT UNSIGNED,
     project_id INT UNSIGNED,
     action VARCHAR(200) NOT NULL,
+    document_type ENUM 'approval_letter','ppis_letter','release_letter','pdc','revised_annex_d','ipo','acknowledgement','cert_first_untagging','original_receipt','matrix_of_inspection','cert_final_untagging','certified_true_copy','audited_financial_report','supporting_documents' DEFAULT NULL,
+    file_path VARCHAR(500),
     details TEXT,
-    ip_address VARCHAR(45),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_user (user_id),
     INDEX idx_project (project_id),

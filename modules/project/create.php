@@ -21,14 +21,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!$firmId || $projectTitle === '' || $fundAmount <= 0) {
         $error = 'Please fill in all required fields.';
     } else {
-        // Handle project image
-        $projectImagePath = null;
-        if (!empty($_FILES['project_image']['name'])) {
-            $up = handleUpload($_FILES['project_image'], 'project_images');
+        // Handle approval letter
+        $approvalLetterPath = null;
+        if (!empty($_FILES['approval_letter']['name'])) {
+            $up = handleUpload($_FILES['approval_letter'], 'approval_letters');
             if (isset($up['error'])) {
                 $error = $up['error'];
             } else {
-                $projectImagePath = $up['path'];
+                $approvalLetterPath = $up['path'];
             }
         }
 
@@ -48,17 +48,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 // Insert project
                 $stmt = $db->prepare("
-                    INSERT INTO projects (firm_id, project_title, fund_amount, project_image, current_stage, status, created_by)
+                    INSERT INTO projects (firm_id, project_title, fund_amount, approval_letter, current_stage, status, created_by)
                     VALUES (:fid, :title, :amount, :img, 'approval', 'active', :uid)
                 ");
                 $stmt->execute([
                     ':fid'    => $firmId,
                     ':title'  => $projectTitle,
                     ':amount' => $fundAmount,
-                    ':img'    => $projectImagePath,
+                    ':img'    => $approvalLetterPath,
                     ':uid'    => currentUser()['id'],
                 ]);
                 $projectId = (int)$db->lastInsertId();
+
+                logActivity(currentUser()['id'],$projectId,'SUBMIT_APPROVAL_LETTER','approval_letter',$approvalLetterPath,'Submission of approval letter');
 
                 // Insert PPIS submission if uploaded
                 if ($ppisPath) {
@@ -73,6 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ':uid'   => currentUser()['id'],
                     ]);
                 }
+
+                logActivity(currentUser()['id'],$projectId,'SUBMIT_PPIS_LETTER','ppis_letter',$ppisPath,'Submission of approval letter');
 
                 $db->commit();
                 logActivity(currentUser()['id'], $projectId, 'CREATE_PROJECT', "Created project: $projectTitle");
@@ -139,13 +143,13 @@ ob_start();
 
         <!-- Project Title + Image -->
         <div class="card mb-4">
-            <div class="card-header-ppmis"><i class="bi bi-image me-2"></i>Project Title</div>
+            <div class="card-header-ppmis"><i class="bi bi-image me-2"></i>Approval Letter</div>
             <div class="card-body-ppmis">
                 <div class="image-upload-box mb-4">
                     <button type="button" class="insert-image-btn" onclick="document.getElementById('projectImageInput').click()">
                         <i class="bi bi-upload"></i> Insert Image
                     </button>
-                    <input type="file" id="projectImageInput" name="project_image"
+                    <input type="file" id="projectImageInput" name="approval_letter"
                            accept="image/jpeg,image/png,image/gif" style="display:none;"
                            onchange="previewProjectImage(this)">
                     <div class="image-preview-area" id="projectImgPreview">

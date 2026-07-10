@@ -51,13 +51,13 @@ $stageUrl = [
     'final_untagging' => '/modules/project/stage_final_untagging.php',
     'pre_refunding'  => '/modules/project/stage_pre_refunding.php',
     'refunding'      => '/modules/project/stage_refunding.php',
-    'completed'      => '/modules/project/view.php',
+    'completed'      => '/modules/progress/view.php',
 ];
 
 $stageNextUrl = [
     'approval'       => appPath('modules/project/stage_first_untagging.php'),
-    'first_untagging'=> appPath('modules/project/stage_first_untagging.php'),
-    'final_untagging'=> appPath('modules/project/stage_final_untagging.php'),
+    'first_untagging' => appPath('modules/project/stage_first_untagging.php'),
+    'final_untagging' => appPath('modules/project/stage_final_untagging.php'),
     'pre_refunding'  => appPath('modules/project/stage_pre_refunding.php'),
     'refunding'      => appPath('modules/project/stage_refunding.php'),
 ];
@@ -109,7 +109,7 @@ ob_start();
                             $paid      = (int)$p['paid_refunds'];
                             $refundPct = $total > 0 ? round(($paid / $total) * 100) : 0;
                             $isRefund  = in_array($stage, ['refunding', 'completed']);
-                            $viewUrl   = ($stageUrl[$stage] ?? '/modules/project/view.php') . '?id=' . (int)$p['id'];
+                            $viewUrl   = ($stageUrl[$stage] ?? '/modules/progress/view.php') . '?id=' . (int)$p['id'];
                             $projectId       = $p['id'];
                         ?>
                             <tr>
@@ -134,16 +134,34 @@ ob_start();
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <a href="<?= h(appPath('modules/financial/report.php?id=' . (int)$p['id'])) ?>"
+                                    <a href="<?= h(appPath('modules/financial/report.php?id=' . (int)$projectId)) ?>"
                                         class="btn-preview" style="font-size:12px;padding:6px 12px;border-radius:6px;text-decoration:none;">
-                                        <i class="bi bi-eye me-1"></i>View
+                                        <i class="bi bi-eye me-1"></i>View Financial Report
                                     </a>
                                 </td>
                                 <td>
-                                    <a href="<?= h($stageNextUrl[$stage] ?? '#') ?>?id=<?= $projectId ?>"
-                                        class="btn-ppmis-primary" style="justify-content:center;">
-                                        <i class="bi bi-pencil-square"></i> Continue This Stage
-                                    </a>
+                                    <div style="max-width:200px;">
+                                        <?php if ($stage == 'terminated'): ?>
+                                            <div class="btn-ppmis-disabled" style="justify-content:center;min-height: 5px;margin-bottom: 5px;">
+                                                <i class="bi bi-ban"></i> Terminated Project
+                                            </div>
+                                        <?php else: ?>
+                                            <a href="<?= h($stageNextUrl[$stage] ?? '#') ?>?id=<?= $projectId ?>"
+                                                class="btn-ppmis-primary" style="justify-content:center;min-height: 5px;margin-bottom: 5px;">
+                                                <i class="bi bi-pencil-square"></i> Continue This Stage
+                                            </a>
+                                        <?php endif; ?>
+                                        <div style="display:flex;">
+                                            <a href="<?= h(appPath('modules/progress/view.php?id=' . (int)$projectId)) ?>"
+                                                class="btn-preview" style="font-size:12px;padding:6px 12px;border-radius:6px;text-decoration:none;margin: 5px;">
+                                                <i class="bi bi-eye me-1"></i>View Status
+                                            </a>
+                                            <a href="<?= h(appPath('modules/progress/terminate.php?id=' . (int)$projectId)) ?>"
+                                                class="btn-preview-danger" style="font-size:12px;padding:6px 12px;border-radius:6px;text-decoration:none;">
+                                                <i class="bi bi-stop-circle"></i>Terminate Project
+                                            </a>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

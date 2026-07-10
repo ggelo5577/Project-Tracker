@@ -92,19 +92,20 @@ function endOfMonth(string $date): string {
 }
 
 // Log activity
-function logActivity(int $userId, ?int $projectId, string $action, string $details = ''): void {
+function logActivity(int $userId, ?int $projectId, string $action, ?string $document_type = null, string $file_path = '', string $details = ''): void {
     try {
         $db = getDB();
         $stmt = $db->prepare(
-            "INSERT INTO activity_logs (user_id, project_id, action, details, ip_address)
-             VALUES (:uid, :pid, :action, :details, :ip)"
+            "INSERT INTO activity_logs (user_id, project_id, action, document_type, file_path, details)
+             VALUES (:uid, :pid, :action, :document_type, :file_path, :details)"
         );
         $stmt->execute([
-            ':uid'     => $userId,
-            ':pid'     => $projectId,
-            ':action'  => $action,
-            ':details' => $details,
-            ':ip'      => $_SERVER['REMOTE_ADDR'] ?? '',
+            ':uid'           => $userId,
+            ':pid'           => $projectId,
+            ':action'        => $action,
+            ':document_type' => $document_type,
+            ':file_path'     => $file_path,
+            ':details'       => $details,
         ]);
     } catch (Exception $e) {
         error_log($e->getMessage());
