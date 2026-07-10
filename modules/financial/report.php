@@ -9,9 +9,9 @@ $projectId = (int)($_GET['id'] ?? 0);
 if (!$projectId) { header('Location: '.appPath('index.php')); exit; }
 
 $stmt = $db->prepare("
-    SELECT p.*, f.firm_name, f.contact_person, f.contact_email
-    FROM projects p JOIN firms f ON f.id = p.firm_id
-    WHERE p.id = :id
+    SELECT p.*, pn.proponent_name, pn.contact_person, pn.contact_email
+    FROM projects pj JOIN proponents pn ON pn.id = pj.proponent_id
+    WHERE pj.id = :id
 ");
 $stmt->execute([':id' => $projectId]);
 $project = $stmt->fetch();
@@ -184,7 +184,7 @@ ob_start();
                     <table style="width:100%;font-size:13.5px;border-collapse:collapse;">
                         <tr>
                             <td style="padding:8px 0;color:#888;font-weight:600;padding-right:14px;">Proponent</td>
-                            <td style="padding:8px 0;font-weight:700;"><?= h($project['firm_name']) ?></td>
+                            <td style="padding:8px 0;font-weight:700;"><?= h($project['proponent_name']) ?></td>
                         </tr>
                         <tr style="border-top:1px solid #f0f0f0;">
                             <td style="padding:8px 0;color:#888;font-weight:600;">Fund Amount</td>

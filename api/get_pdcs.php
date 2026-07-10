@@ -9,7 +9,7 @@ $projectId = (int)($_GET['project_id'] ?? 0);
 
 if (!$projectId) { die('Invalid project.'); }
 
-$stmt = $db->prepare("SELECT p.project_title, f.firm_name FROM projects p JOIN firms f ON f.id=p.firm_id WHERE p.id=:id");
+$stmt = $db->prepare("SELECT p.project_title, pn.proponent_name FROM projects pj JOIN proponents pn ON pn.id=pj.proponents_id WHERE pj.id=:id");
 $stmt->execute([':id' => $projectId]);
 $project = $stmt->fetch();
 if (!$project) { die('Project not found.'); }
@@ -42,7 +42,7 @@ $pdcs = $pdcStmt->fetchAll();
 <div class="page-title">
     <i class="bi bi-credit-card me-2"></i>
     PDC Submissions — <?= h($project['project_title']) ?>
-    <small style="font-weight:400;margin-left:8px;"><?= h($project['firm_name']) ?></small>
+    <small style="font-weight:400;margin-left:8px;"><?= h($project['proponent_name']) ?></small>
 </div>
 
 <?php if (empty($pdcs)): ?>

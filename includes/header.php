@@ -44,7 +44,7 @@
                 </a>
             </li>
             <li class="nav-item">
-                <a href="<?= h(appPath('modules/firms/create.php')) ?>" class="nav-link <?= ($activePage ?? '') === 'firms' ? 'active' : '' ?>">
+                <a href="<?= h(appPath('modules/proponents/create.php')) ?>" class="nav-link <?= ($activePage ?? '') === 'proponents' ? 'active' : '' ?>">
                     <i class="bi bi-building"></i>
                     <span>Proponents</span>
                 </a>

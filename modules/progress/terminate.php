@@ -13,10 +13,10 @@ if (!$projectId) {
 }
 
 $stmt = $db->prepare("
-    SELECT p.*, f.firm_name, f.contact_person, f.contact_email, f.contact_phone
-    FROM projects p
-    JOIN firms f ON f.id = p.firm_id
-    WHERE p.id = :id
+    SELECT pj.*, pn.proponent_name, pn.contact_person, pn.contact_email, pn.contact_phone
+    FROM projects pj
+    JOIN proponents pn ON pn.id = pj.proponent_id
+    WHERE pj.id = :id
 ");
 $stmt->execute([':id' => $projectId]);
 $project = $stmt->fetch();

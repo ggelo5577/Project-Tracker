@@ -8,23 +8,23 @@ $db = getDB();
 // Load all projects with proponent & refund stats
 $projects = $db->query("
     SELECT
-        p.id,
-        p.project_title,
-        p.current_stage,
-        p.fund_amount,
-        f.firm_name,
+        pj.id,
+        pj.project_title,
+        pj.current_stage,
+        pj.fund_amount,
+        pn.proponent_name,
         COALESCE(rs.total_refunds, 0) AS total_refunds,
         COALESCE(rs.paid_refunds, 0)  AS paid_refunds
-    FROM projects p
-    JOIN firms f ON f.id = p.firm_id
+    FROM projects pj
+    JOIN proponents pn ON pn.id = pj.proponent_id
     LEFT JOIN (
         SELECT project_id,
                COUNT(*) AS total_refunds,
                SUM(is_done) AS paid_refunds
         FROM refund_schedule
         GROUP BY project_id
-    ) rs ON rs.project_id = p.id
-    ORDER BY p.updated_at DESC
+    ) rs ON rs.project_id = pn.id
+    ORDER BY pj.updated_at DESC
 ")->fetchAll();
 
 $stageLabels = [
@@ -114,7 +114,7 @@ ob_start();
                         ?>
                             <tr>
                                 <td><strong><?= h($p['project_title']) ?></strong></td>
-                                <td><?= h($p['firm_name']) ?></td>
+                                <td><?= h($p['proponent_name']) ?></td>
                                 <td>
                                     <span class="badge-stage <?= h($badgeCls) ?>">
                                         <?= h($stageText) ?>

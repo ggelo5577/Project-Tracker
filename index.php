@@ -33,11 +33,11 @@ $pendingPct = 100 - $paidPct;
 
 // Project status list (most recent 20)
 $projectList = $db->query("
-    SELECT p.id, p.project_title, p.current_stage, p.status,
-           f.firm_name
-    FROM projects p
-    JOIN firms f ON f.id = p.firm_id
-    ORDER BY p.updated_at DESC
+    SELECT pj.id, pj.project_title, pj.current_stage, pj.status,
+           pn.proponent_name
+    FROM projects pj
+    JOIN proponents pn ON pn.id = pj.proponent_id
+    ORDER BY pj.updated_at DESC
     LIMIT 20
 ")->fetchAll();
 
@@ -162,7 +162,7 @@ ob_start();
                                 <?php foreach ($projectList as $p): ?>
                                     <tr>
                                         <td><strong><?= h($p['project_title']) ?></strong></td>
-                                        <td><?= h($p['firm_name']) ?></td>
+                                        <td><?= h($p['proponent_name']) ?></td>
                                         <td>
                                             <span class="badge-stage <?= h($stageBadge[$p['current_stage']] ?? '') ?>">
                                                 <?= h($stageLabels[$p['current_stage']] ?? $p['current_stage']) ?>

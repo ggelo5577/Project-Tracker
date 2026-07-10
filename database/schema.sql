@@ -20,10 +20,10 @@ CREATE TABLE users (
     INDEX idx_role (role)
 ) ENGINE=InnoDB;
 
--- Firms / Proponents Table
-CREATE TABLE firms (
+-- Proponents Table
+CREATE TABLE proponents (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    firm_name VARCHAR(300) NOT NULL,
+    proponent_name VARCHAR(300) NOT NULL,
     contact_person VARCHAR(200),
     contact_email VARCHAR(191),
     contact_phone VARCHAR(50),
@@ -32,14 +32,14 @@ CREATE TABLE firms (
     created_by INT UNSIGNED,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_firm_name (firm_name(100)),
+    INDEX idx_proponent_name (proponent_name(100)),
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
 -- Projects Table
 CREATE TABLE projects (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    firm_id INT UNSIGNED NOT NULL,
+    proponent_id INT UNSIGNED NOT NULL,
     project_title VARCHAR(400) NOT NULL,
     fund_amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,
     approval_letter VARCHAR(500),         -- path to uploaded approval letter
@@ -56,10 +56,10 @@ CREATE TABLE projects (
     created_by INT UNSIGNED,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_firm (firm_id),
+    INDEX idx_proponent (proponent_id),
     INDEX idx_stage (current_stage),
     INDEX idx_status (status),
-    FOREIGN KEY (firm_id) REFERENCES firms(id) ON DELETE CASCADE,
+    FOREIGN KEY (proponent_id) REFERENCES proponents(id) ON DELETE CASCADE,
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB;
 
@@ -150,7 +150,7 @@ CREATE TABLE activity_logs (
     user_id INT UNSIGNED,
     project_id INT UNSIGNED,
     action VARCHAR(200) NOT NULL,
-    document_type ENUM 'approval_letter','ppis_letter','release_letter','pdc','revised_annex_d','ipo','acknowledgement','cert_first_untagging','original_receipt','matrix_of_inspection','cert_final_untagging','certified_true_copy','audited_financial_report','supporting_documents' DEFAULT NULL,
+    document_type ENUM ('approval_letter','ppis_letter','release_letter','pdc','revised_annex_d','ipo','acknowledgement','cert_first_untagging','original_receipt','matrix_of_inspection','cert_final_untagging','certified_true_copy','audited_financial_report','supporting_documents') DEFAULT NULL,
     file_path VARCHAR(500),
     details TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -171,8 +171,8 @@ VALUES (
     'admin'
 );
 
--- Seed sample firms
-INSERT INTO firms (firm_name, contact_person, contact_email, contact_phone, created_by) VALUES
+-- Seed sample proponent
+INSERT INTO proponents (proponent_name, contact_person, contact_email, contact_phone, created_by) VALUES
 ('TechCorp Solutions Inc.', 'Juan dela Cruz', 'juan@techcorp.ph', '09171234567', 1),
 ('Visayas Research Group', 'Maria Santos', 'maria@vrg.ph', '09281234567', 1),
 ('Eastern Mindanao Innovations', 'Pedro Reyes', 'pedro@emi.ph', '09391234567', 1);

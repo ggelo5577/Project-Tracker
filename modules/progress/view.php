@@ -96,10 +96,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'updat
 }
 
 $stmt = $db->prepare("
-    SELECT p.*, f.firm_name, f.contact_person, f.contact_email, f.contact_phone
-    FROM projects p
-    JOIN firms f ON f.id = p.firm_id
-    WHERE p.id = :id
+    SELECT pj.*, pn.proponent_name, pn.contact_person, pn.contact_email, pn.contact_phone
+    FROM projects pj
+    JOIN proponents pn ON pn.id = pj.proponent_id
+    WHERE pj.id = :id
 ");
 $stmt->execute([':id' => $projectId]);
 $project = $stmt->fetch();
@@ -250,7 +250,7 @@ ob_start();
                 <div class="card-body-ppmis">
                     <table style="width:100%;font-size:13.5px;border-collapse:collapse;">
                         <tr><td style="padding:7px 0;color:#888;font-weight:600;white-space:nowrap;padding-right:12px;">Proponent</td>
-                            <td style="padding:7px 0;font-weight:700;"><?= h($project['firm_name']) ?></td></tr>
+                            <td style="padding:7px 0;font-weight:700;"><?= h($project['proponent_name']) ?></td></tr>
                         <tr><td style="padding:7px 0;color:#888;font-weight:600;border-top:1px solid #f0f0f0;">Contact</td>
                             <td style="padding:7px 0;border-top:1px solid #f0f0f0;"><?= h($project['contact_person'] ?? '—') ?></td></tr>
                         <tr><td style="padding:7px 0;color:#888;font-weight:600;border-top:1px solid #f0f0f0;">Email</td>

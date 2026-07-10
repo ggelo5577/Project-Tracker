@@ -49,8 +49,8 @@ ppmis/
 │   │   ├── terminate.php        ← New Project Status: Terminated 
 │   ├── financial/
 │   │   └── report.php           ← Financial report + image preview
-│   └── firms/
-│       └── create.php           ← Add/manage proponent firms
+│   └── proponents/
+│       └── create.php           ← Add/manage proponents
 │
 ├── api/
 │   ├── submit_pdcs.php          ← PDC mass upload endpoint

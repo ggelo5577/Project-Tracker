@@ -13,7 +13,7 @@ if (!$projectId) {
     exit;
 }
 
-$stmt = $db->prepare("SELECT p.*, f.firm_name FROM projects p JOIN firms f ON f.id = p.firm_id WHERE p.id = :id");
+$stmt = $db->prepare("SELECT pj.*, pn.proponent_name FROM projects pj JOIN proponents pn ON pn.id = pj.proponent_id WHERE pj.id = :id");
 $stmt->execute([':id' => $projectId]);
 $project = $stmt->fetch();
 if (!$project) {

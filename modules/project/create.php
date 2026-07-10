@@ -8,17 +8,17 @@ $db    = getDB();
 $error = '';
 $success = '';
 
-// Load firms for dropdown
-$firms = $db->query("SELECT id, firm_name FROM firms WHERE is_active = 1 ORDER BY firm_name")->fetchAll();
+// Load proponents for dropdown
+$proponents = $db->query("SELECT id, proponent_name FROM proponents WHERE is_active = 1 ORDER BY proponent_name")->fetchAll();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verifyCsrf();
 
-    $firmId      = (int)($_POST['firm_id'] ?? 0);
+    $proponentId      = (int)($_POST['proponent_id'] ?? 0);
     $projectTitle = sanitize($_POST['project_title'] ?? '');
     $fundAmount   = (float)($_POST['fund_amount'] ?? 0);
 
-    if (!$firmId || $projectTitle === '' || $fundAmount <= 0) {
+    if (!$proponentId || $projectTitle === '' || $fundAmount <= 0) {
         $error = 'Please fill in all required fields.';
     } else {
         // Handle approval letter
@@ -48,11 +48,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 // Insert project
                 $stmt = $db->prepare("
-                    INSERT INTO projects (firm_id, project_title, fund_amount, approval_letter, current_stage, status, created_by)
+                    INSERT INTO projects (proponent_id, project_title, fund_amount, approval_letter, current_stage, status, created_by)
                     VALUES (:fid, :title, :amount, :img, 'approval', 'active', :uid)
                 ");
                 $stmt->execute([
-                    ':fid'    => $firmId,
+                    ':fid'    => $proponentId,
                     ':title'  => $projectTitle,
                     ':amount' => $fundAmount,
                     ':img'    => $approvalLetterPath,
@@ -123,19 +123,19 @@ ob_start();
         <div class="card mb-4">
             <div class="card-header-ppmis"><i class="bi bi-building me-2"></i>Choose Proponent</div>
             <div class="card-body-ppmis">
-                <label class="form-label-ppmis">Select Proponent Firm *</label>
-                <select name="firm_id" class="ppmis-select" required>
+                <label class="form-label-ppmis">Select Proponent *</label>
+                <select name="proponent_id" class="ppmis-select" required>
                     <option value="">-- Select a Proponent --</option>
-                    <?php foreach ($firms as $f): ?>
+                    <?php foreach ($proponents as $f): ?>
                         <option value="<?= (int)$f['id'] ?>"
-                            <?= ((int)($_POST['firm_id'] ?? 0) === (int)$f['id']) ? 'selected' : '' ?>>
-                            <?= h($f['firm_name']) ?>
+                            <?= ((int)($_POST['proponent_id'] ?? 0) === (int)$f['id']) ? 'selected' : '' ?>>
+                            <?= h($f['proponent_name']) ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
-                <?php if (empty($firms)): ?>
+                <?php if (empty($proponents)): ?>
                     <div style="margin-top:8px;font-size:12px;color:#888;">
-                        No firms found. <a href="<?= h(appPath('modules/firms/create.php')) ?>">Add a firm first.</a>
+                        No proponents found. <a href="<?= h(appPath('modules/proponents/create.php')) ?>">Add a proponent first.</a>
                     </div>
                 <?php endif; ?>
             </div>

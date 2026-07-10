@@ -10,26 +10,26 @@ $success = '';
 // Handle create
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create') {
     verifyCsrf();
-    $firmName     = sanitize($_POST['firm_name'] ?? '');
+    $proponentName     = sanitize($_POST['proponent_name'] ?? '');
     $contactPerson = sanitize($_POST['contact_person'] ?? '');
     $contactEmail  = filter_var(trim($_POST['contact_email'] ?? ''), FILTER_VALIDATE_EMAIL) ?: null;
     $contactPhone  = sanitize($_POST['contact_phone'] ?? '');
     $address       = sanitize($_POST['address'] ?? '');
 
-    if ($firmName === '') {
-        $error = 'Firm name is required.';
+    if ($proponentName === '') {
+        $error = 'Proponent name is required.';
     } else {
         // Check duplicate
-        $chk = $db->prepare("SELECT id FROM firms WHERE firm_name = :n LIMIT 1");
-        $chk->execute([':n' => $firmName]);
+        $chk = $db->prepare("SELECT id FROM proponents WHERE proponent_name = :n LIMIT 1");
+        $chk->execute([':n' => $proponentName]);
         if ($chk->fetch()) {
-            $error = 'A firm with this name already exists.';
+            $error = 'A proponent with this name already exists.';
         } else {
-            $ins = $db->prepare("INSERT INTO firms (firm_name, contact_person, contact_email, contact_phone, address, created_by)
+            $ins = $db->prepare("INSERT INTO proponents (proponent_name, contact_person, contact_email, contact_phone, address, created_by)
                 VALUES (:n,:cp,:ce,:ph,:addr,:uid)");
-            $ins->execute([':n' => $firmName, ':cp' => $contactPerson, ':ce' => $contactEmail, ':ph' => $contactPhone, ':addr' => $address, ':uid' => currentUser()['id']]);
-            logActivity(currentUser()['id'], null, 'CREATE_FIRM', "Created firm: $firmName");
-            $success = "Firm \"$firmName\" added successfully!";
+            $ins->execute([':n' => $proponentName, ':cp' => $contactPerson, ':ce' => $contactEmail, ':ph' => $contactPhone, ':addr' => $address, ':uid' => currentUser()['id']]);
+            logActivity(currentUser()['id'], null, 'CREATE_PROPONENT', "Created proponent: $proponentName");
+            $success = "Proponent \"$proponentName\" added successfully!";
         }
     }
 }
@@ -37,28 +37,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Handle update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update') {
     verifyCsrf();
-    $fid           = (int)($_POST['firm_id'] ?? 0);
-    $firmName      = sanitize($_POST['firm_name'] ?? '');
+    $pid           = (int)($_POST['proponent_id'] ?? 0);
+    $proponentName = sanitize($_POST['proponent_name'] ?? '');
     $contactPerson = sanitize($_POST['contact_person'] ?? '');
     $contactEmail  = filter_var(trim($_POST['contact_email'] ?? ''), FILTER_VALIDATE_EMAIL) ?: null;
     $contactPhone  = sanitize($_POST['contact_phone'] ?? '');
     $address       = sanitize($_POST['address'] ?? '');
 
-    if (!$fid) {
-        $error = 'Invalid firm.';
-    } elseif ($firmName === '') {
-        $error = 'Firm name is required.';
+    if (!$pid) {
+        $error = 'Invalid proponent.';
+    } elseif ($proponentName === '') {
+        $error = 'Proponent name is required.';
     } else {
-        // Check duplicate name on a different firm
-        $chk = $db->prepare("SELECT id FROM firms WHERE firm_name = :n AND id != :id LIMIT 1");
-        $chk->execute([':n' => $firmName, ':id' => $fid]);
+        // Check duplicate name on a different proponent
+        $chk = $db->prepare("SELECT id FROM proponents WHERE proponent_name = :n AND id != :id LIMIT 1");
+        $chk->execute([':n' => $proponentName, ':id' => $pid]);
         if ($chk->fetch()) {
-            $error = 'A firm with this name already exists.';
+            $error = 'A proponent with this name already exists.';
         } else {
-            $upd = $db->prepare("UPDATE firms SET firm_name = :n, contact_person = :cp, contact_email = :ce, contact_phone = :ph, address = :addr WHERE id = :id");
-            $upd->execute([':n' => $firmName, ':cp' => $contactPerson, ':ce' => $contactEmail, ':ph' => $contactPhone, ':addr' => $address, ':id' => $fid]);
-            logActivity(currentUser()['id'], null, 'UPDATE_FIRM', "Updated firm: $firmName");
-            $success = "Firm \"$firmName\" updated successfully!";
+            $upd = $db->prepare("UPDATE proponents SET proponent_name = :n, contact_person = :cp, contact_email = :ce, contact_phone = :ph, address = :addr WHERE id = :id");
+            $upd->execute([':n' => $proponentName, ':cp' => $contactPerson, ':ce' => $contactEmail, ':ph' => $contactPhone, ':addr' => $address, ':id' => $pid]);
+            logActivity(currentUser()['id'], null, 'UPDATE_PROPONENT', "Updated proponent: $proponentName");
+            $success = "Proponent \"$proponentName\" updated successfully!";
         }
     }
 }
@@ -66,29 +66,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 // Handle toggle active
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'toggle') {
     verifyCsrf();
-    $fid = (int)($_POST['firm_id'] ?? 0);
-    if ($fid) {
-        $db->prepare("UPDATE firms SET is_active = NOT is_active WHERE id = :id")->execute([':id' => $fid]);
+    $pid = (int)($_POST['proponent_id'] ?? 0);
+    if ($pid) {
+        $db->prepare("UPDATE proponents SET is_active = NOT is_active WHERE id = :id")->execute([':id' => $pid]);
     }
-    header('Location: ' . appPath('modules/firms/create.php'));
+    header('Location: ' . appPath('modules/proponents/create.php'));
     exit;
 }
 
-$firms = $db->query("SELECT f.*, COUNT(p.id) AS project_count FROM firms f LEFT JOIN projects p ON p.firm_id=f.id GROUP BY f.id ORDER BY f.firm_name")->fetchAll();
+$proponents = $db->query("SELECT pn.*, COUNT(p.id) AS project_count FROM proponents pn LEFT JOIN projects p ON p.proponent_id=pn.id GROUP BY pn.id ORDER BY pn.proponent_name")->fetchAll();
 $csrf  = csrfToken();
 
-$pageTitle  = 'Firm Management';
-$activePage = 'firms';
-$breadcrumb = '<a href="' . h(appPath('index.php')) . '">Dashboard</a> / Firm Management';
+$pageTitle  = 'ProponentManagement';
+$activePage = 'proponents';
+$breadcrumb = '<a href="' . h(appPath('index.php')) . '">Dashboard</a> / Proponent Management';
 ob_start();
 ?>
 <div class="page-content">
     <div class="page-banner">
-        <i class="bi bi-building me-2"></i> Firm / Proponent Management
+        <i class="bi bi-building me-2"></i> Proponent / Proponent Management
     </div>
 
     <div class="row g-4">
-        <!-- Add Firm Form -->
+        <!-- Add Proponent Form -->
         <div class="col-lg-4">
             <div class="card">
                 <div class="card-header-ppmis"><i class="bi bi-plus-circle me-2"></i>Add New Proponent</div>
@@ -105,9 +105,9 @@ ob_start();
                         <input type="hidden" name="action" value="create">
 
                         <div class="mb-3">
-                            <label class="form-label-ppmis">Firm / Organization Name *</label>
-                            <input type="text" name="firm_name" class="ppmis-input"
-                                value="<?= h($_POST['firm_name'] ?? '') ?>"
+                            <label class="form-label-ppmis">Proponent / Organization Name *</label>
+                            <input type="text" name="proponent_name" class="ppmis-input"
+                                value="<?= h($_POST['proponent_name'] ?? '') ?>"
                                 placeholder="e.g. TechCorp Solutions Inc." required>
                         </div>
                         <div class="mb-3">
@@ -142,20 +142,20 @@ ob_start();
             </div>
         </div>
 
-        <!-- Firms List -->
+        <!-- Proponents List -->
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-header-ppmis">
                     <i class="bi bi-list-ul me-2"></i>Registered Proponents
                     <span style="margin-left:auto;background:rgba(255,255,255,0.2);padding:2px 10px;border-radius:10px;font-size:12px;">
-                        <?= count($firms) ?> total
+                        <?= count($proponents) ?> total
                     </span>
                 </div>
                 <div style="overflow-x:auto;">
                     <table class="ppmis-table">
                         <thead>
                             <tr>
-                                <th>Firm Name</th>
+                                <th>Proponent Name</th>
                                 <th>Contact No.</th>
                                 <th>Address</th>
                                 <th>Projects</th>
@@ -164,15 +164,15 @@ ob_start();
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if (empty($firms)): ?>
+                            <?php if (empty($proponents)): ?>
                                 <tr>
-                                    <td colspan="6" style="text-align:center;padding:32px;color:#aaa;">No firms yet.</td>
+                                    <td colspan="6" style="text-align:center;padding:32px;color:#aaa;">No proponents yet.</td>
                                 </tr>
                             <?php else: ?>
-                                <?php foreach ($firms as $f): ?>
+                                <?php foreach ($proponents as $f): ?>
                                     <tr style="<?= !$f['is_active'] ? 'opacity:0.5;' : '' ?>">
                                         <td>
-                                            <div style="font-weight:700;"><?= h($f['firm_name']) ?></div>
+                                            <div style="font-weight:700;"><?= h($f['proponent_name']) ?></div>
                                             <?php if ($f['contact_email']): ?>
                                                 <div style="font-size:11px;color:#888;"><?= h($f['contact_email']) ?></div>
                                             <?php endif; ?>
@@ -204,15 +204,15 @@ ob_start();
                                                 <form method="POST" style="display:inline;">
                                                     <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
                                                     <input type="hidden" name="action" value="toggle">
-                                                    <input type="hidden" name="firm_id" value="<?= (int)$f['id'] ?>">
+                                                    <input type="hidden" name="proponent_id" value="<?= (int)$f['id'] ?>">
                                                     <button type="submit" class="btn-preview" style="font-size:11px;padding:4px 10px;width:100%;">
                                                         <?= $f['is_active'] ? 'Deactivate' : 'Activate' ?>
                                                     </button>
                                                 </form>
                                                 <?php if($f['is_active']): ?>
                                                     <button type="button" class="btn-preview" style="font-size:11px;padding:4px 10px;width:100%;"
-                                                    onclick="openEditFirmModal(<?= (int)$f['id'] ?>, <?= htmlspecialchars(json_encode([
-                                                        'firm_name' => $f['firm_name'],
+                                                    onclick="openEditProponentModal(<?= (int)$f['id'] ?>, <?= htmlspecialchars(json_encode([
+                                                        'proponent_name' => $f['proponent_name'],
                                                         'contact_person' => $f['contact_person'],
                                                         'contact_email' => $f['contact_email'],
                                                         'contact_phone' => $f['contact_phone'],
@@ -235,22 +235,22 @@ ob_start();
     </div>
 </div>
 
-<!-- Edit Firm Modal -->
-<div id="editFirmModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1050;align-items:center;justify-content:center;">
+<!-- Edit Proponent Modal -->
+<div id="editProponentModalOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1050;align-items:center;justify-content:center;">
     <div style="background:#fff;border-radius:10px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
         <div class="card-header-ppmis" style="display:flex;align-items:center;justify-content:space-between;border-radius:10px 10px 0 0;">
             <span><i class="bi bi-pencil-square me-2"></i>Edit Proponent</span>
-            <button type="button" onclick="closeEditFirmModal()" style="background:none;border:none;color:#fff;font-size:20px;line-height:1;cursor:pointer;">&times;</button>
+            <button type="button" onclick="closeEditProponentModal()" style="background:none;border:none;color:#fff;font-size:20px;line-height:1;cursor:pointer;">&times;</button>
         </div>
         <div class="card-body-ppmis" style="padding:20px;">
             <form method="POST" novalidate>
                 <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
                 <input type="hidden" name="action" value="update">
-                <input type="hidden" name="firm_id" id="edit_firm_id" value="">
+                <input type="hidden" name="proponent_id" id="edit_proponent_id" value="">
 
                 <div class="mb-3">
-                    <label class="form-label-ppmis">Firm / Organization Name *</label>
-                    <input type="text" name="firm_name" id="edit_firm_name" class="ppmis-input" required>
+                    <label class="form-label-ppmis">Proponent / Organization Name *</label>
+                    <input type="text" name="proponent_name" id="edit_proponent_name" class="ppmis-input" required>
                 </div>
                 <div class="mb-3">
                     <label class="form-label-ppmis">Contact Person</label>
@@ -270,7 +270,7 @@ ob_start();
                 </div>
 
                 <div style="display:flex;gap:10px;">
-                    <button type="button" class="btn-preview" style="flex:1;justify-content:center;" onclick="closeEditFirmModal()">Cancel</button>
+                    <button type="button" class="btn-preview" style="flex:1;justify-content:center;" onclick="closeEditProponentModal()">Cancel</button>
                     <button type="submit" class="btn-ppmis-primary" style="flex:1;justify-content:center;">
                         <i class="bi bi-check-lg"></i> Save Changes
                     </button>
@@ -281,20 +281,20 @@ ob_start();
 </div>
 
 <script>
-function openEditFirmModal(id, data) {
-    document.getElementById('edit_firm_id').value = id;
-    document.getElementById('edit_firm_name').value = data.firm_name || '';
+function openEditProponentModal(id, data) {
+    document.getElementById('edit_proponent_id').value = id;
+    document.getElementById('edit_proponent_name').value = data.proponent_name || '';
     document.getElementById('edit_contact_person').value = data.contact_person || '';
     document.getElementById('edit_contact_email').value = data.contact_email || '';
     document.getElementById('edit_contact_phone').value = data.contact_phone || '';
     document.getElementById('edit_address').value = data.address || '';
-    document.getElementById('editFirmModalOverlay').style.display = 'flex';
+    document.getElementById('editProponentModalOverlay').style.display = 'flex';
 }
-function closeEditFirmModal() {
-    document.getElementById('editFirmModalOverlay').style.display = 'none';
+function closeEditProponentModal() {
+    document.getElementById('editProponentModalOverlay').style.display = 'none';
 }
-document.getElementById('editFirmModalOverlay').addEventListener('click', function(e) {
-    if (e.target === this) closeEditFirmModal();
+document.getElementById('editProponentModalOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeEditProponentModal();
 });
 </script>
 <?php
