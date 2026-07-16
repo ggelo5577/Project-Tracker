@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 $proponents = $db->query("SELECT pn.*, COUNT(p.id) AS project_count FROM proponents pn LEFT JOIN projects p ON p.proponent_id=pn.id GROUP BY pn.id ORDER BY pn.proponent_name")->fetchAll();
 $csrf  = csrfToken();
 
-$pageTitle  = 'ProponentManagement';
+$pageTitle  = 'Proponent Management';
 $activePage = 'proponents';
 $breadcrumb = '<a href="' . h(appPath('index.php')) . '">Dashboard</a> / Proponent Management';
 ob_start();
