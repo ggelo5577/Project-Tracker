@@ -23,7 +23,7 @@ $pdcs = $pdcStmt->fetchAll();
 <head>
     <meta charset="UTF-8">
     <title>PDCs – <?= h($project['project_title']) ?></title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
         body { font-family: 'Segoe UI',system-ui,sans-serif; background:#F5F7FA; padding:24px; font-size:14px; }

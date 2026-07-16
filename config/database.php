@@ -10,6 +10,7 @@ define('DB_CHARSET', 'utf8mb4');
 define('APP_BASE', '/ppmis');
 define('UPLOAD_DIR', __DIR__ . '/../uploads/');
 define('UPLOAD_URL', APP_BASE . '/uploads/');
+define('ASSETS', APP_BASE . '/assets/');
 define('MAX_FILE_SIZE', 10 * 1024 * 1024); // 10MB
 define('ALLOWED_TYPES', ['image/jpeg', 'image/png', 'image/gif', 'application/pdf']);
 define('APP_NAME', 'PPMIS');
